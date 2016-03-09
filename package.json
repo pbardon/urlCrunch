@@ -1,0 +1,17 @@
+{
+  "name": "url-crunch",
+  "version": "1.0.0",
+  "description": "a tiny node.js url shortener",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Peter Bardon",
+  "license": "ISC",
+  "devDependencies": {
+    "nodeunit": "^0.9.1"
+  },
+  "dependencies": {
+    "q": "^1.4.1"
+  }
+}
