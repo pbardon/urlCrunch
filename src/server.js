@@ -1,4 +1,6 @@
-function onGet(request, uri) {
+var q = require('q');
+
+function onGet(uri) {
     var deferred = q.defer();
     console.log('GET:');
 
@@ -11,19 +13,20 @@ function onGet(request, uri) {
     return deferred.promise;
 }
 
-function onPost(request, uri) {
+function onPost(uri) {
     var deferred = q.defer();
 
     console.log('POST:');
 
     //Create new uri
 
-
     //Generate unique uri
 
-    //Save to DB
+    //Attempt to save to hash
 
-    //Add to Route Map
+    //If there is a collision, add X random characters
+
+    //Save to Route Map
 
     //Return shortened url
 
@@ -31,7 +34,7 @@ function onPost(request, uri) {
 
 }
 
-function onDelete(request, uri) {
+function onDelete(uri) {
     var deferred = q.defer();
 
     //Parse uri

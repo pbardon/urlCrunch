@@ -1,6 +1,5 @@
 var q = require('q'),
-server = require('server');
-
+server = require('./server');
 
 module.exports = {
     resolve: function(method) {
