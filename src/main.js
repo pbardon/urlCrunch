@@ -6,9 +6,14 @@ var http = require('http'),
 url = require('url'),
 fs = require('fs'),
 q = require('q'),
+uri = require(uri),
 router = require('./router'),
-templates = require('./templates');
+templates = require('./templates'),
+UriDb = require('./UriDb');
 
+var rootPath = process.cwd().slice(0,-4);
+
+var db = UriDb(rootPath);
 
 var httpServer = http.createServer(function (req, res) {
     var uri = url.parse(req.url).pathname,
@@ -18,30 +23,22 @@ var httpServer = http.createServer(function (req, res) {
     payload,
     errorMessage;
 
-    for (var i in req) {
-        console.log(i);
-    }
-
     try {
-        console.log('Incoming request at uri: ');
-        console.log(uri);
-        console.log(method);
-        console.log("SLICE:");
-        console.log(uri.slice(4));
-        console.log(uri.slice(1));
-
-
-        if (uri.slice(0, 4) == '/api') {
-            console.log('serving api content');
+        console.log('Incoming ' + method + ' request at uri: ' + uri);
+        if (uri.slice(0, 4) == '/link') {
+            console.log('routing link request');
             requestProcessor = router.resolve(method);
-            requestProcessor.call(this, res, uri)
+            console.log('handling request with ' + requestProcessor.name + ' processor');
+            requestProcessor.call({}, db, uri)
             .then(function(data){
+                console.log('responding to request with data:');
                 handleResponse(res, data);
             }, function(err) {
+                console.log('hit some kind of error');
                 handleError(res, err);
             });
         }else if(uri.slice(0, 1) == '/' && method === 'GET') {
-            console.log('Serving home content');
+            console.log('Serving home page content');
             templates.home(function(template) {
                 payload = template;
                 handleResponse(res, payload, true);
@@ -57,8 +54,12 @@ var httpServer = http.createServer(function (req, res) {
     }
 });
 
-httpServer.listen(1337);
+db.loadUris().then(function() {
+    console.log('uris loaded, starting server...');
+    httpServer.listen(1337);
+}, function() {
 
+});
 
 function handleError(response, error) {
     var errorMessage;

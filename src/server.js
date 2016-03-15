@@ -1,10 +1,13 @@
 var q = require('q');
 
-function onGet(uri) {
+
+function onGet(db, uri) {
     var deferred = q.defer();
     console.log('GET:');
 
     //Parse uri
+
+    var key = uri.slice(6);
 
     //Resolve via Route Map
 
@@ -13,12 +16,14 @@ function onGet(uri) {
     return deferred.promise;
 }
 
-function onPost(uri) {
+function onPost(db, uri) {
     var deferred = q.defer();
 
     console.log('POST:');
 
     //Create new uri
+
+
 
     //Generate unique uri
 
@@ -34,7 +39,7 @@ function onPost(uri) {
 
 }
 
-function onDelete(uri) {
+function onDelete(db, uri) {
     var deferred = q.defer();
 
     //Parse uri
