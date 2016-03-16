@@ -64,17 +64,6 @@ database.connect().then(function(db){
     throw err;
 });
 
-// var rootPath = process.cwd().slice(0,-4);
-//
-// var db = UriDb(rootPath);
-
-// db.loadUris().then(function() {
-//     console.log('uris loaded, starting server...');
-//     httpServer.listen(1337);
-// }, function() {
-//
-// });
-
 function handleError(response, error) {
     var errorMessage;
     response.writeHead(200, {
