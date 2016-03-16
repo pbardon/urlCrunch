@@ -56,7 +56,7 @@ var httpServer = function(db) {
 var database = new UrlDb();
 
 database.connect().then(function(db){
-    console.log('starting server')
+    console.log('starting server');
     httpServer(db).listen(1337);
     db.close();
 }, function(err){
