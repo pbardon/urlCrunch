@@ -6,12 +6,15 @@ function onGet(db, uri) {
     console.log('GET:');
 
     //Parse uri
-
     var key = uri.slice(6);
-
     //Resolve via Route Map
+    if (db.uriMap[key]) {
+        //Return expanded url
 
-    //Return expanded url
+        deferred.resolve(db.uriMap[key]);
+    }else {
+        deferred.reject('Could not resolve uri using key: ' + key);
+    }
 
     return deferred.promise;
 }
@@ -22,10 +25,7 @@ function onPost(db, uri) {
     console.log('POST:');
 
     //Create new uri
-
-
-
-    //Generate unique uri
+    var key = key.generateKey(uri);
 
     //Attempt to save to hash
 

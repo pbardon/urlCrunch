@@ -3,14 +3,32 @@ pg = require('pg'),
 path = require('path');
 q = require('q');
 
+var MongoClient = require('mongodb').MongoClient;
+var mongoUri = 'mongodb://localhost:27017/test';
 
-function UriDb(path) {
+
+function UrlDb(path) {
     this.uriMap = {};
     this.dbPath = path;
     return this;
 }
 
-UriDb.prototype.getUri = function(key) {
+UrlDb.prototype.connect = function(){
+    var deferred = q.defer();
+    console.log('about to connect to mongodb');
+    MongoClient.connect(mongoUri, function(err, db){
+        if (err){
+            console.log(err);
+            return deferred.reject(err);
+        }
+        console.log('connected to mongo server');
+        deferred.resolve(db);
+    });
+    
+    return deferred.promise;
+};
+
+UrlDb.prototype.getUri = function(key) {
     if(this.uriMap[key]) {
         return this.uriMap[key];
     }else {
@@ -18,7 +36,7 @@ UriDb.prototype.getUri = function(key) {
     }
 };
 
-UriDb.prototype.addUri = function(key, uri) {
+UrlDb.prototype.addUri = function(key, uri) {
     //Check for key collision
     if (!this.uriMap[key]) {
     //Add uri to map
@@ -31,12 +49,12 @@ UriDb.prototype.addUri = function(key, uri) {
         });
     }else {
     //Key collision, generate a new key
-        key = 'newKey';
+        key = key.generateKey(uri);
         this.addUri(key, uri);
     }
 };
 
-UriDb.prototype.saveUriObject = function(key, uri) {
+UrlDb.prototype.saveUriObject = function(key, uri) {
     var deferred = q.defer();
     console.log('starting to save uri object');
     writeUriObjectToDisk(this.dbPath, key, uri)
@@ -48,7 +66,7 @@ UriDb.prototype.saveUriObject = function(key, uri) {
     return deferred.promise;
 };
 
-UriDb.prototype.loadUris = function() {
+UrlDb.prototype.loadUris = function() {
     var deferred = q.defer();
     var dbLoadPromises = [];
     var oThis = this;
@@ -75,7 +93,7 @@ UriDb.prototype.loadUris = function() {
     return deferred.promise;
 };
 
-UriDb.prototype.removeUri = function(key) {
+UrlDb.prototype.removeUri = function(key) {
     var deferred = q.defer();
     console.log('attempting to remove uri');
     console.log(key);
@@ -98,7 +116,6 @@ UriDb.prototype.removeUri = function(key) {
     }
 
     return deferred.promise;
-
 };
 
 function readUriFromDisk(path) {
@@ -126,4 +143,4 @@ function writeUriObjectToDisk(path, key, uri) {
     return deferred.promise;
 }
 
-module.exports = UriDb;
+module.exports = UrlDb;
