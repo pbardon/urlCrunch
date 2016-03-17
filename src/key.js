@@ -1,12 +1,12 @@
 var crypto = require('crypto');
 
 module.exports = {
-    generateKey: function(uri) {
+    generateKey: function(uri, keyLength) {
         var key = '';
         var hash = crypto.createHash('sha256');
         hash.update(uri);
         var digested = hash.digest('hex');
-        for(var i=0; i<6; i++){
+        for(var i=0; i<keyLength; i++){
             key = key.concat(getRandomCharacter(digested));
         }
         return key;

@@ -1,50 +1,50 @@
-var UriDb = require('../src/UriDb');
-var fs = require('fs');
-var path = process.cwd().slice(0,-5) + '/uriDb';
+var UrlDb = require('../src/UrlDb');
 var testKey = 'testKey';
-var testUri = 'www.google.com';
-var db = new UriDb(path);
-var testFilePath = path + '/' + testKey;
+var testUrl = 'www.google.com';
+var testDb = 'mongodb://localhost:27017/test';
+var database;
+var urlDb = new UrlDb(testDb);
 
 
-exports.testSaveUriToDisk = function(test) {
-    db.saveUriObject(testKey, testUri).then(function(key, uri) {
-        fs.readFile(testFilePath, function(err, data) {
-            if (err) {
-                return console.log(err);
-            }
-            test.ok(data == testUri, 'saved test uri to disk');
+module.exports= {
+    setUp: function(callback){
+        urlDb.connect().then(function(data){
+            console.log('connected to db');
+            urlDb.db = data;
+            callback();
+        });
+    },
+
+    tearDown: function(callback){
+        urlDb.disconnect();
+        console.log('disconnected from db');
+        callback();
+    },
+
+    testConnect: function(test) {
+        console.log('starting connect test');
+        var uri = urlDb.connect().then(function(db){
+            console.log('connected to db');
+            test.ok(typeof db.find !== undefined, 'able to connect to db');
             test.done();
         });
-    }, function(err) {
-        console.log(err);
-    });
-};
+    },
 
-exports.testLoadUris = function(test){
-    db.loadUris().then(function() {
-        test.ok(typeof db.uriMap[testKey] !== 'undefined', 'successfully loaded uri');
-        test.ok(db.uriMap[testKey] === 'www.google.com');
-
-        console.log(testFilePath);
+    testAddUrl: function(test) {
+        var key = urlDb.addUrl(testKey, testUrl);
+        test.ok(key === testKey, 'able to add url to db');
         test.done();
-    });
+    },
+
+
+
 };
 
-exports.testGetUri = function(test) {
-    var uri = db.getUri(testKey);
-    test.ok(uri === testUri, 'able to retrive uri from map');
-    test.done();
-};
-
-exports.testRemoveUri = function(test) {
-    test.expect(1);
-    db.removeUri(testKey).then(function() {
-        fs.readFile(testFilePath, function(err, data) {
-            if (err) {
-                test.ok(err.message.slice(0,6) === 'ENOENT', 'confirm that file is removed.');
-                test.done();
-            }
-        });
-    });
-};
+// exports.testGetUri = function(test) {
+//     var uri = db.getUri(testKey);
+//     test.ok(uri === testUri, 'able to retrive uri from map');
+//     test.done();
+// };
+//
+// exports.testRemoveUri = function(test) {
+// };

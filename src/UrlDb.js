@@ -1,146 +1,105 @@
 var fs = require('fs'),
 pg = require('pg'),
-path = require('path');
-q = require('q');
+path = require('path'),
+q = require('q'),
+log = console.log;
 
 var MongoClient = require('mongodb').MongoClient;
-var mongoUri = 'mongodb://localhost:27017/test';
 
 
-function UrlDb(path) {
-    this.uriMap = {};
-    this.dbPath = path;
+function UrlDb(dbUri) {
+    this.db = {};
+    this.mongoUri = dbUri;
     return this;
 }
 
 UrlDb.prototype.connect = function(){
     var deferred = q.defer();
     console.log('about to connect to mongodb');
-    MongoClient.connect(mongoUri, function(err, db){
+    MongoClient.connect(this.mongoUri, function(err, db){
         if (err){
             console.log(err);
             return deferred.reject(err);
         }
-        console.log('connected to mongo server');
+        console.log('connected to mongodb');
+        this.db = db;
         deferred.resolve(db);
     });
-    
+
     return deferred.promise;
 };
 
-UrlDb.prototype.getUri = function(key) {
-    if(this.uriMap[key]) {
-        return this.uriMap[key];
+UrlDb.prototype.disconnect = function(){
+    if (!this.db){
+        throw new Error('db is not connected');
+    }
+
+    this.db.close();
+};
+
+UrlDb.prototype.getUrl = function(key) {
+    var searchUrl = this.db.urls.find({ _id: key });
+    if(searchUrl) {
+        return searchUrl.url;
     }else {
         return false;
     }
 };
 
-UrlDb.prototype.addUri = function(key, uri) {
+UrlDb.prototype.addUrl = function(key, url) {
+    var deferred = q.defer();
     //Check for key collision
-    if (!this.uriMap[key]) {
-    //Add uri to map
-        saveUriObject(key, uri)
-        .then(function() {
-            this.uriMap[key] = uri;
-            return key;
-        },function(err) {
+    log('about to add url');
+    // this.db.open(function(err, db) {
+    //     var urlCollection = this.db.urls('urlCollection');
+    //     urlCollection.insert({});
+    //     log(urlCollection);
+    //     db.close();
+    // }
+    if (!this.db.urls){
+        log('creating url collection');
+        var urlCollection = this.db.urls('urlCollection');
+        urlCollection.insert({});
+        log(urlCollection);
+    }
 
+    this.db.urls.insert({ _id: key });
+
+    log(this.db.urls.find());
+
+
+    var searchUrl = this.db.urls.find({ _id: key });
+    log('search url returned');
+    log(JSON.stringify(searchUrl));
+    if (!searchUrl) {
+    //Add url to map
+        this.db.urls.insert({
+            _id: key,
+            url: url
         });
+        return key;
     }else {
-    //Key collision, generate a new key
-        key = key.generateKey(uri);
-        this.addUri(key, uri);
+        log('generating new key');
+
+    //Key collision, generate a new key with an extra character
+        key = key.generateKey(url, keyLength + 1);
+        this.addUrl(key, url);
     }
-};
 
-UrlDb.prototype.saveUriObject = function(key, uri) {
-    var deferred = q.defer();
-    console.log('starting to save uri object');
-    writeUriObjectToDisk(this.dbPath, key, uri)
-    .then(function(key, uri){
-        deferred.resolve(key, uri);
-    },function(err) {
-        deferred.reject(err);
-    });
     return deferred.promise;
 };
 
-UrlDb.prototype.loadUris = function() {
-    var deferred = q.defer();
-    var dbLoadPromises = [];
-    var oThis = this;
-    path = this.dbPath;
-    // Read each of the JSON files on disk using key-value pairs to build uri map
-    fs.readdir(path, function(err, keys){
-        keys.forEach(function(key){
-            dbLoadPromises.push(readUriFromDisk(path + '/' + key)
-            .then(function(data) {
-                oThis.uriMap[key] = data;
-            }));
-        });
-
-        q.all(dbLoadPromises).then(function(){
-            deferred.resolve();
-        }, function(err) {
-            console.log(err);
-            deferred.reject(err);
-        });
-
-    },function(err) {
-        deferred.reject(err);
-    });
-    return deferred.promise;
-};
-
-UrlDb.prototype.removeUri = function(key) {
-    var deferred = q.defer();
-    console.log('attempting to remove uri');
+UrlDb.prototype.removeUrl = function(key) {
+    console.log('attempting to remove uri:');
     console.log(key);
-
-
-    if (this.uriMap[key]) {
-        console.log('found key in map');
-        fs.unlink(this.dbPath + '/' + key, function(err) {
-            if (err) {
-                console.log(err);
-                throw err;
-            }
-            console.log('removed uri entry at key: ');
-            console.log(key);
-            deferred.resolve();
-        });
+    var searchUrl = this.db.urls.find({ _id: key });
+    if (searchUrl) {
+        console.log('found url, removing from db');
+        this.uriMap[key] = undefined;
+        this.db.urls.remove(key);
     } else {
-        console.log('could not find key' + key + ' .');
-        deferred.reject(new Error('Uri object does not exist in map'));
+        console.log('could not find url with key: ' + key + ' .');
     }
-
-    return deferred.promise;
 };
-
-function readUriFromDisk(path) {
-    var deferred = q.defer();
-    console.log(path);
-    fs.readFile(path, function(err, data) {
-        data = data.toString();
-        console.log(data);
-        deferred.resolve(data);
-    });
-    return deferred.promise;
-}
-
-function writeUriObjectToDisk(path, key, uri) {
-    var deferred = q.defer();
-    fs.writeFile(path + '/' + key, uri, function(err, data) {
-        if (err) {
-            console.log(err);
-            return deferred.reject(err);
-        }
-        console.log('saved uri: ' + uri +  ' to disk, with key:  ' + key );
-        deferred.resolve(key, uri);
-    });
-
-    return deferred.promise;
-}
 
 module.exports = UrlDb;
