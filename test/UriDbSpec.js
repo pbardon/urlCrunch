@@ -6,7 +6,7 @@ var database;
 var urlDb = new UrlDb(testDb);
 
 
-module.exports= {
+module.exports = {
     setUp: function(callback){
         urlDb.connect().then(function(data){
             console.log('connected to db');

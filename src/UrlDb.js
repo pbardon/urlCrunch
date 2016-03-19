@@ -29,12 +29,14 @@ UrlDb.prototype.connect = function(){
                     if(err){
                         log(err);
                         deferred.reject(err);
+                        db.close();
                     }
 
                     console.log('created urls collection ');
 
                     this.db = db;
                     deferred.resolve(db);
+                    db.close();
                 });
             }
         });
@@ -71,6 +73,7 @@ UrlDb.prototype.addUrl = function(dbKey, url) {
         if (!urlObject) {
             console.log('adding url object');
             return oThis.insertUrlObject(dbKey, url).then(function(obj){
+                console.log('done adding url object');
                 deferred.resolve(obj);
 
             }, function(err){
@@ -95,11 +98,13 @@ UrlDb.prototype.findById = function(dbKey) {
         if(err){
             log(err);
             deferred.reject(err);
+            db.close();
         }
         db.collection("urls", function(err, collection){
             if(err){
                 log(err);
                 deferred.reject(err);
+                db.close();
                 return;
             }
             console.log('searching for url with key: ' + dbKey);
@@ -108,6 +113,7 @@ UrlDb.prototype.findById = function(dbKey) {
                 if(err){
                     log(err);
                     deferred.reject(err);
+                    db.close();
                     return;
                 }
                 if(!data[0]){
@@ -135,6 +141,7 @@ UrlDb.prototype.insertUrlObject = function(dbKey, url){
             if(err){
                 log(err);
                 deferred.reject(err);
+                db.close();
                 return;
             }
             console.log('inserting url' + url +' with key: ' + dbKey);
@@ -143,6 +150,7 @@ UrlDb.prototype.insertUrlObject = function(dbKey, url){
                 if(err){
                     log(err);
                     deferred.reject(err);
+                    db.close();
                     return;
                 }
 
@@ -150,11 +158,12 @@ UrlDb.prototype.insertUrlObject = function(dbKey, url){
                     log('inserted url');
                     log(JSON.stringify(data));
                     deferred.resolve(data.insertedIds[0]);
+                    db.close();
+                    return;
                 }
 
                 log('could not insert url');
                 deferred.resolve(false);
-
                 db.close();
             });
         });
