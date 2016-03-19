@@ -31,13 +31,13 @@ module.exports= {
     },
 
     testAddUrl: function(test) {
-        var key = urlDb.addUrl(testKey, testUrl);
-        test.ok(key === testKey, 'able to add url to db');
-        test.done();
+        var key = urlDb.addUrl(testKey, testUrl).then(function(data){
+            console.log(data);
+
+            test.ok(data, 'able to add url to db');
+            test.done();
+        });
     },
-
-
-
 };
 
 // exports.testGetUri = function(test) {

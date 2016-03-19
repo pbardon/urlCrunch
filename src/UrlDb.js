@@ -2,6 +2,7 @@ var fs = require('fs'),
 pg = require('pg'),
 path = require('path'),
 q = require('q'),
+key = require('./key'),
 log = console.log;
 
 var MongoClient = require('mongodb').MongoClient;
@@ -22,8 +23,21 @@ UrlDb.prototype.connect = function(){
             return deferred.reject(err);
         }
         console.log('connected to mongodb');
-        this.db = db;
-        deferred.resolve(db);
+        db.collections(function(err, data){
+            if(data.indexOf('urls') === -1 ){
+                db.createCollection("urls", function(err, collection){
+                    if(err){
+                        log(err);
+                        deferred.reject(err);
+                    }
+
+                    console.log('created urls collection ');
+
+                    this.db = db;
+                    deferred.resolve(db);
+                });
+            }
+        });
     });
 
     return deferred.promise;
@@ -37,8 +51,8 @@ UrlDb.prototype.disconnect = function(){
     this.db.close();
 };
 
-UrlDb.prototype.getUrl = function(key) {
-    var searchUrl = this.db.urls.find({ _id: key });
+UrlDb.prototype.getUrl = function(dbKey) {
+    var searchUrl = this.db.urls.find({ _id: dbKey });
     if(searchUrl) {
         return searchUrl.url;
     }else {
@@ -46,59 +60,119 @@ UrlDb.prototype.getUrl = function(key) {
     }
 };
 
-UrlDb.prototype.addUrl = function(key, url) {
-    var deferred = q.defer();
+UrlDb.prototype.addUrl = function(dbKey, url) {
+    var deferred = q.defer(),
+    oThis = this;
     //Check for key collision
     log('about to add url');
-    // this.db.open(function(err, db) {
-    //     var urlCollection = this.db.urls('urlCollection');
-    //     urlCollection.insert({});
-    //     log(urlCollection);
-    //     db.close();
-    // }
-    if (!this.db.urls){
-        log('creating url collection');
-        var urlCollection = this.db.urls('urlCollection');
-        urlCollection.insert({});
-        log(urlCollection);
-    }
+    this.findById(dbKey).then(function(urlObject){
+        console.log('finished searching, found:');
+        console.log(urlObject);
+        if (!urlObject) {
+            console.log('adding url object');
+            return oThis.insertUrlObject(dbKey, url).then(function(obj){
+                deferred.resolve(obj);
 
-    this.db.urls.insert({ _id: key });
+            }, function(err){
+                deferred.reject(err);
+            });
+        }
 
-    log(this.db.urls.find());
+        dbKey = key.generateKey(url, dbKey.length + 1);
+        console.log('found object for key, genreated new key: ' + dbKey);
+        oThis.addUrl(dbKey, url).then(function(data){
+            deferred.resolve(data);
 
-
-    var searchUrl = this.db.urls.find({ _id: key });
-    log('search url returned');
-    log(JSON.stringify(searchUrl));
-    if (!searchUrl) {
-    //Add url to map
-        this.db.urls.insert({
-            _id: key,
-            url: url
         });
-        return key;
-    }else {
-        log('generating new key');
-
-    //Key collision, generate a new key with an extra character
-        key = key.generateKey(url, keyLength + 1);
-        this.addUrl(key, url);
-    }
+    });
 
     return deferred.promise;
 };
 
-UrlDb.prototype.removeUrl = function(key) {
+UrlDb.prototype.findById = function(dbKey) {
+    var deferred = q.defer();
+    this.db.open(function(err, db){
+        if(err){
+            log(err);
+            deferred.reject(err);
+        }
+        db.collection("urls", function(err, collection){
+            if(err){
+                log(err);
+                deferred.reject(err);
+                return;
+            }
+            console.log('searching for url with key: ' + dbKey);
+
+            var searchUrl = collection.find({ _id: dbKey}).toArray( function(err, data){
+                if(err){
+                    log(err);
+                    deferred.reject(err);
+                    return;
+                }
+                if(!data[0]){
+                    log('could not find url with key: '+ dbKey);
+                    deferred.resolve(false);
+                    db.close();
+                    return;
+                }
+                log('search url returned');
+                log(JSON.stringify(data[0]));
+                db.close();
+                deferred.resolve(data[0]);
+            });
+        });
+    });
+    return deferred.promise;
+};
+
+UrlDb.prototype.insertUrlObject = function(dbKey, url){
+    var deferred = q.defer();
+    console.log('inserting url object');
+    this.db.open(function(err, db){
+        console.log('db open');
+        db.collection("urls", function(err, collection){
+            if(err){
+                log(err);
+                deferred.reject(err);
+                return;
+            }
+            console.log('inserting url' + url +' with key: ' + dbKey);
+
+            var searchUrl = collection.insert({ _id: dbKey, url: url}, function(err, data){
+                if(err){
+                    log(err);
+                    deferred.reject(err);
+                    return;
+                }
+
+                if (data.result.ok === 1 ) {
+                    log('inserted url');
+                    log(JSON.stringify(data));
+                    deferred.resolve(data.insertedIds[0]);
+                }
+
+                log('could not insert url');
+                deferred.resolve(false);
+
+                db.close();
+            });
+        });
+    });
+
+    return deferred.promise;
+};
+
+UrlDb.prototype.removeUrl = function(dbKey) {
     console.log('attempting to remove uri:');
-    console.log(key);
-    var searchUrl = this.db.urls.find({ _id: key });
+    console.log(dbKey);
+    var searchUrl = this.db.urls.find({ _id: dbKey });
     if (searchUrl) {
         console.log('found url, removing from db');
-        this.uriMap[key] = undefined;
-        this.db.urls.remove(key);
+        this.uriMap[dbKey] = undefined;
+        this.db.urls.remove(dbKey);
     } else {
-        console.log('could not find url with key: ' + key + ' .');
+        console.log('could not find url with key: ' + dbKey + ' .');
     }
 };
 
