@@ -16,8 +16,8 @@ module.exports = {
     },
 
     tearDown: function(callback){
-        urlDb.disconnect();
-        console.log('disconnected from db');
+        // urlDb.disconnect();
+        // console.log('disconnected from db');
         callback();
     },
 
@@ -31,13 +31,40 @@ module.exports = {
     },
 
     testAddUrl: function(test) {
+        console.log('starting add url test');
+
         var key = urlDb.addUrl(testKey, testUrl).then(function(data){
             console.log(data);
-
             test.ok(data, 'able to add url to db');
             test.done();
         });
     },
+
+    testLoadUrlCollection: function(test) {
+        console.log('starting load url collection test');
+
+        urlDb.loadUrlCollection().then(function(data){
+            test.ok(data.s.name === 'urls', 'url collection loaded');
+            test.done();
+        });
+    },
+
+    testRemoveUrlCollection: function(test) {
+        console.log('starting remove url collection test');
+        urlDb.loadUrlCollection().then(function(){
+            urlDb.removeUrlCollection().then(function(data) {
+                test.ok(data, 'url collection removed');
+                test.done();
+            });
+        });
+    },
+
+    testFindById: function(test) {
+        console.log('starting find by id test');
+
+        test.done();
+
+    }
 };
 
 // exports.testGetUri = function(test) {

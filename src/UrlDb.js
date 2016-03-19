@@ -1,12 +1,10 @@
 var fs = require('fs'),
-pg = require('pg'),
 path = require('path'),
 q = require('q'),
 key = require('./key'),
 log = console.log;
 
 var MongoClient = require('mongodb').MongoClient;
-
 
 function UrlDb(dbUri) {
     this.db = {};
@@ -16,29 +14,59 @@ function UrlDb(dbUri) {
 
 UrlDb.prototype.connect = function(){
     var deferred = q.defer();
-    console.log('about to connect to mongodb');
+    var collectionNames;
     MongoClient.connect(this.mongoUri, function(err, db){
         if (err){
             console.log(err);
             return deferred.reject(err);
         }
-        console.log('connected to mongodb');
+        this.db = db;
+        db.close();
+        deferred.resolve(db);
+    });
+
+    return deferred.promise;
+};
+
+
+UrlDb.prototype.loadUrlCollection = function() {
+    var deferred = q.defer(),
+    collectionNames,
+    urlCollection;
+    this.db.open(function(err, db){
         db.collections(function(err, data){
-            if(data.indexOf('urls') === -1 ){
-                db.createCollection("urls", function(err, collection){
+            if (err) {
+                log(err);
+                db.close();
+                deferred.reject(err);
+                return;
+            }
+            //Check to see if the collection exists..
+            collectionNames = data.forEach(function(item) {
+                if (item.s.name === 'urls'){
+                    urlCollection = item;
+                }
+                return item.s.name;
+            });
+            //Check to make sure it exists..
+            if(!urlCollection){
+                //Create the collection if it doesn't exist.
+                return db.createCollection('urls', function(err, collection){
                     if(err){
                         log(err);
                         deferred.reject(err);
                         db.close();
+                        return;
                     }
-
-                    console.log('created urls collection ');
-
-                    this.db = db;
-                    deferred.resolve(db);
                     db.close();
+                    deferred.resolve(collection);
                 });
             }
+
+            //Otherwise just return the collection...
+            deferred.resolve(urlCollection);
+            db.close();
+            return;
         });
     });
 
@@ -66,14 +94,9 @@ UrlDb.prototype.addUrl = function(dbKey, url) {
     var deferred = q.defer(),
     oThis = this;
     //Check for key collision
-    log('about to add url');
     this.findById(dbKey).then(function(urlObject){
-        console.log('finished searching, found:');
-        console.log(urlObject);
         if (!urlObject) {
-            console.log('adding url object');
             return oThis.insertUrlObject(dbKey, url).then(function(obj){
-                console.log('done adding url object');
                 deferred.resolve(obj);
 
             }, function(err){
@@ -82,7 +105,6 @@ UrlDb.prototype.addUrl = function(dbKey, url) {
         }
 
         dbKey = key.generateKey(url, dbKey.length + 1);
-        console.log('found object for key, genreated new key: ' + dbKey);
         oThis.addUrl(dbKey, url).then(function(data){
             deferred.resolve(data);
 
@@ -103,27 +125,24 @@ UrlDb.prototype.findById = function(dbKey) {
         db.collection("urls", function(err, collection){
             if(err){
                 log(err);
-                deferred.reject(err);
                 db.close();
+                deferred.reject(err);
                 return;
             }
-            console.log('searching for url with key: ' + dbKey);
 
             var searchUrl = collection.find({ _id: dbKey}).toArray( function(err, data){
                 if(err){
                     log(err);
-                    deferred.reject(err);
                     db.close();
+                    deferred.reject(err);
                     return;
                 }
                 if(!data[0]){
                     log('could not find url with key: '+ dbKey);
-                    deferred.resolve(false);
                     db.close();
+                    deferred.resolve(false);
                     return;
                 }
-                log('search url returned');
-                log(JSON.stringify(data[0]));
                 db.close();
                 deferred.resolve(data[0]);
             });
@@ -134,37 +153,36 @@ UrlDb.prototype.findById = function(dbKey) {
 
 UrlDb.prototype.insertUrlObject = function(dbKey, url){
     var deferred = q.defer();
-    console.log('inserting url object');
     this.db.open(function(err, db){
-        console.log('db open');
+        if(err){
+            log(err);
+            deferred.reject(err);
+            db.close();
+            return;
+        }
         db.collection("urls", function(err, collection){
             if(err){
                 log(err);
-                deferred.reject(err);
                 db.close();
+                deferred.reject(err);
                 return;
             }
-            console.log('inserting url' + url +' with key: ' + dbKey);
-
             var searchUrl = collection.insert({ _id: dbKey, url: url}, function(err, data){
                 if(err){
                     log(err);
-                    deferred.reject(err);
                     db.close();
+                    deferred.reject(err);
                     return;
                 }
 
                 if (data.result.ok === 1 ) {
-                    log('inserted url');
                     log(JSON.stringify(data));
-                    deferred.resolve(data.insertedIds[0]);
                     db.close();
+                    deferred.resolve(data.insertedIds[0]);
                     return;
                 }
-
-                log('could not insert url');
-                deferred.resolve(false);
                 db.close();
+                deferred.resolve(false);
             });
         });
     });
@@ -173,16 +191,39 @@ UrlDb.prototype.insertUrlObject = function(dbKey, url){
 };
 
 UrlDb.prototype.removeUrl = function(dbKey) {
-    console.log('attempting to remove uri:');
     console.log(dbKey);
     var searchUrl = this.db.urls.find({ _id: dbKey });
     if (searchUrl) {
-        console.log('found url, removing from db');
         this.uriMap[dbKey] = undefined;
         this.db.urls.remove(dbKey);
     } else {
         console.log('could not find url with key: ' + dbKey + ' .');
     }
+};
+
+UrlDb.prototype.removeUrlCollection = function() {
+    var deferred = q.defer();
+    this.db.open(function(err, db){
+        if(err){
+            log(err);
+            db.close();
+            deferred.reject(err);
+            return;
+        }
+        db.collection('urls').drop(function(err, collection){
+            if(err){
+                log(err);
+                db.close();
+                deferred.reject(err);
+                return;
+            }
+            db.close();
+            deferred.resolve(collection);
+            return;
+        });
+    });
+
+    return deferred.promise;
 };
 
 module.exports = UrlDb;
