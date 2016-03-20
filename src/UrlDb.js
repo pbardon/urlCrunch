@@ -14,15 +14,22 @@ function UrlDb(dbUri) {
 
 UrlDb.prototype.connect = function(){
     var deferred = q.defer();
-    var collectionNames;
-    MongoClient.connect(this.mongoUri, function(err, db){
+    var collectionNames,
+    oThis = this;
+    MongoClient.connect(this.mongoUri, function(err, urlDatabase){
         if (err){
             console.log(err);
             return deferred.reject(err);
         }
-        this.db = db;
-        db.close();
-        deferred.resolve(db);
+
+        urlDatabase.open(function(err, db){
+            if (err){
+                console.log(err);
+                return deferred.reject(err);
+            }
+            oThis.db = db;
+            deferred.resolve(db);
+        });
     });
 
     return deferred.promise;
@@ -32,42 +39,43 @@ UrlDb.prototype.connect = function(){
 UrlDb.prototype.loadUrlCollection = function() {
     var deferred = q.defer(),
     collectionNames,
-    urlCollection;
-    this.db.open(function(err, db){
-        db.collections(function(err, data){
-            if (err) {
-                log(err);
-                db.close();
-                deferred.reject(err);
-                return;
-            }
-            //Check to see if the collection exists..
-            collectionNames = data.forEach(function(item) {
-                if (item.s.name === 'urls'){
-                    urlCollection = item;
-                }
-                return item.s.name;
-            });
-            //Check to make sure it exists..
-            if(!urlCollection){
-                //Create the collection if it doesn't exist.
-                return db.createCollection('urls', function(err, collection){
-                    if(err){
-                        log(err);
-                        deferred.reject(err);
-                        db.close();
-                        return;
-                    }
-                    db.close();
-                    deferred.resolve(collection);
-                });
-            }
-
-            //Otherwise just return the collection...
-            deferred.resolve(urlCollection);
-            db.close();
+    urlCollection,
+    oThis = this;
+    this.db.collections(function(err, data){
+        if (err) {
+            log(err);
+            deferred.reject(err);
             return;
+        }
+        //Check to see if the collection exists..
+        data.forEach(function(item) {
+            log(item.s.name);
+            if (item.s.name === 'urls'){
+                urlCollection = item;
+            }
+            return item.s.name;
         });
+        //Check to make sure it exists..
+        if(!urlCollection){
+            //Create the collection if it doesn't exist.
+            console.log('creating new collection');
+
+            console.log(oThis.db.createCollection);
+
+
+            try {
+                urlCollection = oThis.db.createCollection('urls');
+                return deferred.resolve(urlCollection);
+            }catch(ex) {
+                log(ex);
+                deferred.reject(ex);
+            }
+        }
+
+        console.log('returning existing collection');
+
+        //Otherwise just return the collection...
+        deferred.resolve(urlCollection);
     });
 
     return deferred.promise;
@@ -77,7 +85,6 @@ UrlDb.prototype.disconnect = function(){
     if (!this.db){
         throw new Error('db is not connected');
     }
-
     this.db.close();
 };
 
@@ -95,8 +102,13 @@ UrlDb.prototype.addUrl = function(dbKey, url) {
     oThis = this;
     //Check for key collision
     this.findById(dbKey).then(function(urlObject){
+        log('found object');
+        log(urlObject);
         if (!urlObject) {
+            log('about to insert url object');
             return oThis.insertUrlObject(dbKey, url).then(function(obj){
+                log('inserted url object');
+                log(obj);
                 deferred.resolve(obj);
 
             }, function(err){
@@ -104,10 +116,12 @@ UrlDb.prototype.addUrl = function(dbKey, url) {
             });
         }
 
+        log('generating new key');
+
         dbKey = key.generateKey(url, dbKey.length + 1);
         oThis.addUrl(dbKey, url).then(function(data){
+            log('added url with new key');
             deferred.resolve(data);
-
         });
     });
 
@@ -115,75 +129,47 @@ UrlDb.prototype.addUrl = function(dbKey, url) {
 };
 
 UrlDb.prototype.findById = function(dbKey) {
-    var deferred = q.defer();
-    this.db.open(function(err, db){
-        if(err){
-            log(err);
-            deferred.reject(err);
-            db.close();
-        }
-        db.collection("urls", function(err, collection){
-            if(err){
+    var deferred = q.defer(),
+    urlList;
+    this.loadUrlCollection().then(function(urlCollection){
+        log('loaded urlCollection');
+        log('loaded urlCollection********');
+
+        log('collection');
+        urlCollection.find({ _id: dbKey}).toArray(function(err, data){
+            if (err) {
                 log(err);
-                db.close();
-                deferred.reject(err);
-                return;
+                return deferred.reject(err);
             }
 
-            var searchUrl = collection.find({ _id: dbKey}).toArray( function(err, data){
-                if(err){
-                    log(err);
-                    db.close();
-                    deferred.reject(err);
-                    return;
-                }
-                if(!data[0]){
-                    log('could not find url with key: '+ dbKey);
-                    db.close();
-                    deferred.resolve(false);
-                    return;
-                }
-                db.close();
-                deferred.resolve(data[0]);
-            });
+            log(data);
+
+            if(!data[0]){
+                log('could not find url with key: '+ dbKey);
+                deferred.resolve(false);
+                return;
+            }
+            return deferred.resolve(data[0]);
         });
     });
     return deferred.promise;
 };
 
 UrlDb.prototype.insertUrlObject = function(dbKey, url){
-    var deferred = q.defer();
-    this.db.open(function(err, db){
-        if(err){
-            log(err);
-            deferred.reject(err);
-            db.close();
-            return;
-        }
-        db.collection("urls", function(err, collection){
+    var deferred = q.defer(),
+    oThis = this;
+    this.loadUrlCollection().then(function(urlCollection){
+        urlCollection.insert({ _id: dbKey, url: url}, function(err, data){
             if(err){
                 log(err);
-                db.close();
                 deferred.reject(err);
                 return;
             }
-            var searchUrl = collection.insert({ _id: dbKey, url: url}, function(err, data){
-                if(err){
-                    log(err);
-                    db.close();
-                    deferred.reject(err);
-                    return;
-                }
 
-                if (data.result.ok === 1 ) {
-                    log(JSON.stringify(data));
-                    db.close();
-                    deferred.resolve(data.insertedIds[0]);
-                    return;
-                }
-                db.close();
-                deferred.resolve(false);
-            });
+            if (data.result.ok === 1 ) {
+                return deferred.resolve(data.insertedIds[0]);
+            }
+            return deferred.resolve(false);
         });
     });
 
@@ -191,36 +177,34 @@ UrlDb.prototype.insertUrlObject = function(dbKey, url){
 };
 
 UrlDb.prototype.removeUrl = function(dbKey) {
-    console.log(dbKey);
-    var searchUrl = this.db.urls.find({ _id: dbKey });
-    if (searchUrl) {
-        this.uriMap[dbKey] = undefined;
-        this.db.urls.remove(dbKey);
-    } else {
-        console.log('could not find url with key: ' + dbKey + ' .');
-    }
+    var deferred = q.defer();
+    this.loadUrlCollection().then(function(urlCollection){
+        log('loaded urlCollection');
+        urlCollection.remove({ '_id': dbKey }, function(err, data) {
+            log('removed urlCollection');
+            if (err) {
+                log(err);
+                return deferred.reject(err);
+            }
+            return deferred.resolve(data);
+        });
+    });
+    return deferred.promise;
 };
 
 UrlDb.prototype.removeUrlCollection = function() {
     var deferred = q.defer();
-    this.db.open(function(err, db){
-        if(err){
-            log(err);
-            db.close();
-            deferred.reject(err);
-            return;
+    this.loadUrlCollection().then(function(urlCollection){
+        log('loaded urlCollection');
+        try {
+            urlCollection.drop();
+            log('removed url collection');
+            return deferred.resolve(urlCollection);
+
+        }catch (ex){
+            log(ex);
+            return deferred.reject(ex);
         }
-        db.collection('urls').drop(function(err, collection){
-            if(err){
-                log(err);
-                db.close();
-                deferred.reject(err);
-                return;
-            }
-            db.close();
-            deferred.resolve(collection);
-            return;
-        });
     });
 
     return deferred.promise;
