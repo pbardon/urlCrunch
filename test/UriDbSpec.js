@@ -11,19 +11,19 @@ var urlDb = new UrlDb(testDb);
 
 
 module.exports = {
-    setUp: function(callback){
-        urlDb.connect().then(function(data){
-            console.log('connected to db');
-            urlDb.db = data;
-            callback();
-        });
-    },
-
-    tearDown: function(callback){
-        urlDb.disconnect();
-        console.log('disconnected from db');
-        callback();
-    },
+    // setUp: function(callback){
+    //     urlDb.connect().then(function(data){
+    //         console.log('connected to db');
+    //         urlDb.db = data;
+    //         callback();
+    //     });
+    // },
+    //
+    // tearDown: function(callback){
+    //     urlDb.disconnect();
+    //     console.log('disconnected from db');
+    //     callback();
+    // },
 
     testConnect: function(test) {
         console.log('starting connect test');
@@ -32,10 +32,6 @@ module.exports = {
             test.ok(typeof db.find !== undefined, 'able to connect to db');
             test.done();
         });
-    },
-
-    testDisconnect: function(test) {
-        test.done();
     },
 
     testLoadUrlCollection: function(test) {
@@ -50,57 +46,58 @@ module.exports = {
         });
     },
 
-    // testInsertUrlObject: function(test) {
-    //     console.log('starting insert url test');
-    //     urlDb.insertUrlObject(testKey3, testUrl3).then(function(){
-    //         console.log('url object inserted');
-    //         urlDb.findById(testKey3).then(function(data){
-    //             console.log('############');
-    //             console.log(data);
-    //             test.ok(data._id === testKey3, 'key found');
-    //             test.ok(data.url === testUrl3, 'with correct value');
-    //             urlDb.disconnect();
-    //
-    //             test.done();
-    //         });
-    //     });
-    // },
-    //
-    // testFindById: function(test) {
-    //     console.log('starting find by id test');
-    //     urlDb.findById(testKey3).then(function(data){
-    //         console.log(data);
-    //         test.ok(data._id === testKey3, 'key found');
-    //         test.ok(data.url === testUrl3, 'with correct value');
-    //         urlDb.disconnect();
-    //
-    //         test.done();
-    //     });
-    // },
-    //
-    // testRemoveUrl: function(test) {
-    //     console.log('starting remove url test');
-    //     urlDb.removeUrl(testKey3).then(function(){
-    //         console.log('removed url');
-    //         urlDb.findById(testKey3).then(function(data){
-    //             test.ok(!data, 'key removed');
-    //             urlDb.disconnect();
-    //
-    //             test.done();
-    //         });
-    //     });
-    // },
-    //
-    // testRemoveUrlCollection: function(test) {
-    //     console.log('starting remove url collection test');
-    //     urlDb.loadUrlCollection().then(function(){
-    //         console.log('loaded url collection');
-    //         urlDb.removeUrlCollection().then(function(data) {
-    //             test.ok(data, 'url collection removed');
-    //             urlDb.disconnect();
-    //
-    //             test.done();
-    //         });
-    //     });
-    // }
+    testInsertUrlObject: function(test) {
+        console.log('starting insert url test');
+        urlDb.insertUrlObject(testKey3, testUrl3).then(function(){
+            console.log('url object inserted');
+            urlDb.findById(testKey3).then(function(data){
+                console.log('############');
+                console.log(data);
+                test.ok(data._id === testKey3, 'key found');
+                test.ok(data.url === testUrl3, 'with correct value');
+
+                test.done();
+            });
+        });
+    },
+
+    testFindById: function(test) {
+        console.log('starting find by id test');
+        urlDb.findById(testKey3).then(function(data){
+            console.log(data);
+            test.ok(data._id === testKey3, 'key found');
+            test.ok(data.url === testUrl3, 'with correct value');
+
+            test.done();
+        });
+    },
+
+    testRemoveUrl: function(test) {
+        console.log('starting remove url test');
+        urlDb.removeUrl(testKey3).then(function(){
+            console.log('removed url');
+            urlDb.findById(testKey3).then(function(data){
+                test.ok(!data, 'key removed');
+
+                test.done();
+            });
+        });
+    },
+
+    testRemoveUrlCollection: function(test) {
+        console.log('starting remove url collection test');
+        urlDb.loadUrlCollection().then(function(){
+            console.log('loaded url collection');
+            urlDb.removeUrlCollection().then(function(data) {
+                test.ok(data, 'url collection removed');
+
+                test.done();
+            });
+        });
+    },
+
+    testDisconnect: function(test) {
+        urlDb.disconnect();
+        test.done();
+    }
 };
