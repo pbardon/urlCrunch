@@ -26,7 +26,7 @@ var httpServer = function(db) {
                 console.log('routing link request');
                 requestProcessor = router.resolve(method);
                 console.log('handling request with ' + requestProcessor.name + ' processor');
-                requestProcessor.call({}, db, uri)
+                requestProcessor.call({}, db, uri, body)
                 .then(function(data){
                     console.log('responding to request with data:');
                     handleResponse(res, data);

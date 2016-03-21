@@ -2,45 +2,46 @@ var q = require('q');
 var key = require('./key');
 
 
-function onGet(db, url) {
+function onGet(urlDb, uri) {
     var deferred = q.defer();
     console.log('GET:');
 
-    //Parse url
+    //Parse key from url
     var key = url.slice(6);
-    //Resolve via Route Map
-    if (db.uriMap[key]) {
-        //Return expanded url
-
-        deferred.resolve();
-    }else {
-        deferred.reject('Could not resolve url using key: ' + key);
-    }
+    //Try to find key in url db.
+    urlDb.findById(key).then(function(urlObject){
+        if (urlObject) {
+            return deferred.resolve(urlObject);
+        }
+        return deferred.reject(new Error(
+            'Url object with key: ' + key + ' not found.'));
+    });
 
     return deferred.promise;
 }
 
-function onPost(db, uri) {
+function onPost(urlDb, url, body) {
     var deferred = q.defer();
 
     console.log('POST:');
 
     //Create new uri
-    var generatedKey = key.generateKey(uri);
+    var generatedKey = key.generateKey(url);
 
-    //Attempt to save to hash
-
-    //If there is a collision, add X random characters
-
-    //Save to Route Map
-
-    //Return shortened url
+    urlDb.addUrl(generatedKey, url).then(function(urlObject){
+        if (urlObject){
+            return deferred.resolve(urlObject);
+        }
+        return deferred.reject(new Error(
+            'Unable to add url:' + url +
+            ' with key: ' + generatedKey + 'to database'));
+    });
 
     return deferred.promise;
 
 }
 
-function onDelete(db, uri) {
+function onDelete(urlDb, uri) {
     var deferred = q.defer();
 
     //Parse uri
