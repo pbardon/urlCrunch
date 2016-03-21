@@ -2,7 +2,7 @@ var fs = require('fs');
 
 module.exports = {
         home: function(callback) {
-            openTemplate('../src/views/home.html', callback);
+            openTemplate('./src/views/home.html', callback);
         }
 };
 

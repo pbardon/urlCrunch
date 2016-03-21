@@ -1,13 +1,27 @@
 <html>
-<head></head>
+<head>
+<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-alpha/css/bootstrap.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js"></script>
+</head>
 <body>
-    <div id="main">
-        <div>Crunch your URL!</div>
-        <div>Enter URL:<input type="text"/><div>
-        <div><button id="submitUrl">Submit</button></div>
+    <div class="container">
+        <div  class="jumbotron" id="main">
+            <div  class="jumbotron" id="main">
+                <h1> Welcome to UrlCrunch!</h1>
+                <div id="appContent">
+                    <h4>Get your URL into shape with this simple url shortener.<h4>
+                    <div class="input-group">
+                              <span class="input-group-addon" id="basic-addon3">Enter URL:</span>
+                              <input ype="text" class="form-control" id="urlInput" aria-describedby="basic-addon3"/>
+                    </div>
+                    <br>
+                    <div><button class="btn btn-primary" id="submitUrl">Submit</button></div>
+                </div>
+            </div>
+        </div>
     </div>
 </body>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js"></script>
 <script>
     $(document).ready(function(){
         $('#submitUrl').click(function() {
@@ -18,11 +32,19 @@
                   dataType: 'json',
                   contentType: 'application-json',
                   data: { url: url },
-                  complete: function(data) {
-                      var obj = data.responseJSON;
-                      $('#main').html(function() {
-                          return '<div>Your shortened url is: ' + window.location.href + 'link/'+ obj._id +'<div>';
+                  success: function(data) {
+                      var obj = data;
+                      $('#appContent').html(function() {
+                          var link = window.location.href + 'link/'+ obj._id;
+                          return '<h4>Your shortened url is: <a href="' + link +'" >' +link +'</a></h4>';
                       });
+                  },
+                  error: function(err){
+                      $('#appContent').html(function() {
+                          var link = window.location.href;
+                          return '<h4>There was a problem generating youy shortened url, try again:</h4><br><a href="' + link +'">Back to Homepage</a>';
+                      });
+
                   }
             });
         });

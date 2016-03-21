@@ -18,5 +18,9 @@
     "q": "^1.4.1",
     "sql": "^0.67.0",
     "sql.js": "^0.3.1"
+},
+  "scripts": {
+      "test": "nodeunit test/*.js",
+      "start": "node src/main.js"
   }
 }

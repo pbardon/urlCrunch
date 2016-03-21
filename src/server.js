@@ -9,7 +9,7 @@ function onGet(urlDb, uri, body, response) {
     //Parse key from url
     var key = uri.slice(6);
 
-    //Try to find key in url db.
+    // Try to find key in url db.
     console.log(key);
     urlDb.getUrl(key).then(function(urlObject){
         if (urlObject) {
@@ -28,14 +28,22 @@ function onGet(urlDb, uri, body, response) {
 function onPost(urlDb, uri, body, response) {
     var deferred = q.defer(),
     url;
-    if (!body) {
-        return;
-    }
+    console.log('starting onPost');
     console.log('POST:');
     try {
+
+        if (!body.url) {
+            console.log('URL is missing from post body');
+            var err = new Error('URL is missing from post body');
+            deferred.reject(err);
+        }
+
         url = body.url;
         key.generateKey(url, 6);
 
+        if(url.length < 1) {
+            return deferred.reject(new Error('no url provided'));
+        }
         //Create new uri
         var generatedKey = key.generateKey(url, 6);
 
@@ -55,7 +63,6 @@ function onPost(urlDb, uri, body, response) {
     }
 
     return deferred.promise;
-
 }
 
 function onDelete(urlDb, url, body, response) {
@@ -69,7 +76,7 @@ function onDelete(urlDb, url, body, response) {
 
     urlDb.removeUrl(key).then(function(urlObject) {
         if(urlObject){
-            return deferred.resolve(response, urlObject);
+            return deferred.resolve([response, urlObject]);
         }
 
         return deferred.reject(new Error('could not remove url with key: ' + key));

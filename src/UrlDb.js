@@ -38,9 +38,7 @@
         var deferred = q.defer(),
         oThis = this;
         this.connect().then(function(){
-            log('connected');
             oThis.createUrlCollection().then(function(){
-                log('resolving promise');
                 deferred.resolve();
             });
         });
@@ -58,19 +56,13 @@
     UrlDb.prototype.getUrl = function(dbKey) {
         var deferred = q.defer(),
         oThis = this;
-        log('starting get url');
         loadUrlCollection(this.db).then(function(urlCollection){
             if (!urlCollection) {
                 deferred.reject(new Error('Could not load url collection'));
             }
-            log('about to look for uri');
-            log(dbKey);
             urlCollection.find({ _id: dbKey }).toArray(function(err, data){
-
                 log('found');
                 log(data);
-
-
                 if(data[0]) {
                     return deferred.resolve(data[0]);
                 }else {
@@ -86,8 +78,6 @@
         var deferred = q.defer(),
         oThis = this;
         //Check for key collision
-        log('about to add url');
-        log(this.findById);
         this.findById(dbKey).then(function(urlObject){
             if (!urlObject) {
                 //Insert into database if no object is found with key
@@ -99,7 +89,6 @@
             }
 
             //Otherwise, generate a new key with an extra digit and save it.
-            log('inserting...');
             dbKey = key.generateKey(url, dbKey.length + 1);
             return oThis.addUrl(dbKey, url).then(function(data){
                 deferred.resolve(data);
@@ -115,19 +104,13 @@
     UrlDb.prototype.findById = function(dbKey) {
         var deferred = q.defer(),
         urlList;
-        log('starting find by id');
         loadUrlCollection(this.db).then(function(urlCollection){
             if (!urlCollection) {
-                log('attempting to reject');
                 var err = new Error('Could not load url collection');
                 deferred.reject(err);
             }
 
             urlCollection.find({ _id: dbKey}).toArray(function(err, data){
-
-                log('found: ');
-                log(data);
-
 
                 if (err) {
                     log(err);
@@ -177,19 +160,17 @@
 
     UrlDb.prototype.removeUrl = function(dbKey) {
         var deferred = q.defer();
-        log('about to remove url');
         loadUrlCollection(this.db).then(function(urlCollection){
             if (!urlCollection) {
 
                 return deferred.reject(new Error('Could not load url collection'));
             }
-            log('loaded collection, about to remove url');
             urlCollection.remove({ '_id': dbKey }, function(err, data) {
 
                 if (err) {
                     log(err);
                     return deferred.reject(err);
-                } 
+                }
                 if (data.result.ok === 1 ) {
                     return deferred.resolve(dbKey);
 
@@ -204,13 +185,12 @@
         var deferred = q.defer();
         var oThis = this;
         loadUrlCollection(this.db).then(function(urlCollection){
-            log('loaded url collection');
             if(!urlCollection){
-                log('creating collection');
+                log('creating url collection...');
                 var collection = oThis.db.createCollection('urls');
                 return deferred.resolve(collection);
             }
-            log('just returning collection');
+            log('loaded url collection...');
             //Just return the collection if it already exists
             deferred.resolve(urlCollection);
         });
@@ -234,7 +214,6 @@
     function loadUrlCollection(db) {
         var deferred = q.defer(),
         urlCollection;
-        log('loading collection');
         db.collection('urls', function(err, data){
                 if (err) {
                     log(err);
@@ -246,10 +225,8 @@
                 //Check to make sure it exists..
                 if(!urlCollection){
                     //Resolve the promise as false if the url collection is not found
-                    log('collection not found');
                     return deferred.resolve(false);
                 }
-                log('returning collection');
                 //Otherwise just return the collection...
                 deferred.resolve(urlCollection);
         });

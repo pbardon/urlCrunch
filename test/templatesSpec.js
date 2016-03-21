@@ -4,7 +4,7 @@ fs = require('fs');
 exports.testHomeTemplate = function(test) {
     test.expect(1);
     console.log('starting home template test');
-    var homeFileName = '../src/views/home.html';
+    var homeFileName = './src/views/home.html';
     fs.readFile(homeFileName, 'utf8', function(err, file) {
         console.log('opened file');
         console.log(homeFileName);

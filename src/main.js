@@ -26,12 +26,6 @@ var httpServer = function(db) {
             console.log('Incoming ' + method + ' request at uri: ' + uri);
 
             processPostData(req, function(body) {
-                console.log(body);
-                if(body && !body.url) {
-                    body = JSON.parse(body);
-                }
-                console.log('Incoming ' + method + ' request at uri: ' + uri);
-                console.log(body);
                 if (uri.slice(0, 5) === '/link') {
                     console.log('routing link request');
                     requestProcessor = router.resolve(method);
@@ -42,6 +36,7 @@ var httpServer = function(db) {
                         handleResponse(data[0], data[1]);
                     }, function(err) {
                         console.log('There was some kind of error while processing the request');
+                        console.log(err.message);
                         handleError(res, err);
                     });
                 }else if(uri.slice(0, 1) == '/' && method === 'GET') {
@@ -80,7 +75,7 @@ function startServer(callback) {
 
 function handleError(response, error) {
     var errorMessage;
-    response.writeHead(200, {
+    response.writeHead(500, {
         'Content-Type': 'application/json'
     });
     errorMessage = error.toString();
@@ -131,10 +126,12 @@ function processPostData(request, callback) {
 
 function parseFormPostData(data) {
     var postData = {};
-    if (data.slice(0, 4) == 'url=') {
+    if (data.length > 4 && data.slice(0, 4) == 'url=') {
         postData.url = data.slice(4);
-    }else{
+    }else if (data) {
         postData = data;
+    }else{
+        postData = {};
     }
     return postData;
 }
