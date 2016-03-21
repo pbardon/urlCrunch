@@ -2,7 +2,7 @@ var q = require('q');
 var key = require('./key');
 
 
-function onGet(urlDb, uri) {
+function onGet(urlDb, uri, body, response) {
     var deferred = q.defer();
     console.log('GET:');
 
@@ -13,7 +13,10 @@ function onGet(urlDb, uri) {
     console.log(key);
     urlDb.getUrl(key).then(function(urlObject){
         if (urlObject) {
-            return deferred.resolve(urlObject);
+            response.writeHead(301, {
+                'Location' : 'http://' + urlObject.url
+            });
+            return deferred.resolve(response, urlObject);
         }
         return deferred.reject(new Error(
             'Url object with key: ' + key + ' not found.'));
@@ -22,13 +25,12 @@ function onGet(urlDb, uri) {
     return deferred.promise;
 }
 
-function onPost(urlDb, uri, body) {
+function onPost(urlDb, uri, body, response) {
     var deferred = q.defer(),
     url;
     if (!body) {
         return;
     }
-
     console.log('POST:');
     try {
         url = body.url;
@@ -39,7 +41,7 @@ function onPost(urlDb, uri, body) {
 
         urlDb.addUrl(generatedKey, url).then(function(urlObject){
             if (urlObject){
-                return deferred.resolve(urlObject);
+                return deferred.resolve(response, urlObject);
             }
             return deferred.reject(new Error(
                 'Unable to add url:' + url +
@@ -56,7 +58,7 @@ function onPost(urlDb, uri, body) {
 
 }
 
-function onDelete(urlDb, url) {
+function onDelete(urlDb, url, body, response) {
     var deferred = q.defer();
 
     //Parse uri
@@ -67,7 +69,7 @@ function onDelete(urlDb, url) {
 
     urlDb.removeUrl(key).then(function(urlObject) {
         if(urlObject){
-            return deferred.resolve(urlObject);
+            return deferred.resolve(response, urlObject);
         }
 
         return deferred.reject(new Error('could not remove url with key: ' + key));

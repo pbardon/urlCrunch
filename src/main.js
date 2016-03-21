@@ -35,10 +35,10 @@ var httpServer = function(db) {
                     requestProcessor = router.resolve(method);
                     console.log('handling request with ' +
                      requestProcessor.name + ' processor');
-                    requestProcessor.call({}, db, uri, body)
-                    .then(function(data){
+                    requestProcessor.call({}, db, uri, body, res)
+                    .then(function(response, data){
                         console.log('responding to request with data:');
-                        handleResponse(res, data);
+                        handleResponse(response, data);
                     }, function(err) {
                         console.log('hit some kind of error');
                         handleError(res, err);
@@ -96,9 +96,11 @@ function handleResponse(response, payload, isHtml) {
     }else{
         contentType = 'text/html';
     }
-    response.writeHead(200, {
-        'Content-Type': contentType
-    });
+    if (!response.statusCode) {
+        response.writeHead(200, {
+            'Content-Type': contentType
+        });
+    }
     response.end(payload);
 }
 
