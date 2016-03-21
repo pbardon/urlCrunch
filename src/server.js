@@ -16,7 +16,7 @@ function onGet(urlDb, uri, body, response) {
             response.writeHead(301, {
                 'Location' : 'http://' + urlObject.url
             });
-            return deferred.resolve(response, urlObject);
+            return deferred.resolve([response, urlObject]);
         }
         return deferred.reject(new Error(
             'Url object with key: ' + key + ' not found.'));
@@ -41,7 +41,7 @@ function onPost(urlDb, uri, body, response) {
 
         urlDb.addUrl(generatedKey, url).then(function(urlObject){
             if (urlObject){
-                return deferred.resolve(response, urlObject);
+                return deferred.resolve([response, urlObject]);
             }
             return deferred.reject(new Error(
                 'Unable to add url:' + url +

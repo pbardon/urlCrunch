@@ -1,1 +1,31 @@
-<html><head></head><body>This is the body for the home page.</body></html>
+<html>
+<head></head>
+<body>
+    <div id="main">
+        <div>Crunch your URL!</div>
+        <div>Enter URL:<input type="text"/><div>
+        <div><button id="submitUrl">Submit</button></div>
+    </div>
+</body>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js"></script>
+<script>
+    $(document).ready(function(){
+        $('#submitUrl').click(function() {
+            var url = $('input')[0].value;
+            var request = $.ajax({
+                  method: 'POST',
+                  url: '/link',
+                  dataType: 'json',
+                  contentType: 'application-json',
+                  data: { url: url },
+                  complete: function(data) {
+                      var obj = data.responseJSON;
+                      $('#main').html(function() {
+                          return '<div>Your shortened url is: ' + window.location.href + 'link/'+ obj._id +'<div>';
+                      });
+                  }
+            });
+        });
+    });
+</script>
+</html>

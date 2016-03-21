@@ -23,10 +23,12 @@ var httpServer = function(db) {
         errorMessage;
 
         try {
-            processPostData(req, function(body) {
-                if(body) {
-                    body = JSON.parse(body);
+            console.log('Incoming ' + method + ' request at uri: ' + uri);
 
+            processPostData(req, function(body) {
+                console.log(body);
+                if(body && !body.url) {
+                    body = JSON.parse(body);
                 }
                 console.log('Incoming ' + method + ' request at uri: ' + uri);
                 console.log(body);
@@ -36,11 +38,10 @@ var httpServer = function(db) {
                     console.log('handling request with ' +
                      requestProcessor.name + ' processor');
                     requestProcessor.call({}, db, uri, body, res)
-                    .then(function(response, data){
-                        console.log('responding to request with data:');
-                        handleResponse(response, data);
+                    .then(function(data){
+                        handleResponse(data[0], data[1]);
                     }, function(err) {
-                        console.log('hit some kind of error');
+                        console.log('There was some kind of error while processing the request');
                         handleError(res, err);
                     });
                 }else if(uri.slice(0, 1) == '/' && method === 'GET') {
@@ -119,14 +120,23 @@ function processPostData(request, callback) {
 
         request.on('end', function() {
             console.log('handling post data:');
-            console.log(postData);
-
+            postData = parseFormPostData(postData);
             return callback(postData);
         });
 
     }else {
         callback();
     }
+}
+
+function parseFormPostData(data) {
+    var postData = {};
+    if (data.slice(0, 4) == 'url=') {
+        postData.url = data.slice(4);
+    }else{
+        postData = data;
+    }
+    return postData;
 }
 
 module.exports = {
