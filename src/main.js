@@ -9,7 +9,9 @@ q = require('q'),
 url = require('url'),
 router = require('./router'),
 templates = require('./templates'),
-UrlDb = require('./UrlDb');
+UrlDb = require('./UrlDb'),
+devDb = 'mongodb://localhost:27017/dev';
+
 
 var httpServer = function(db) {
     return http.createServer(function (req, res) {
@@ -21,48 +23,59 @@ var httpServer = function(db) {
         errorMessage;
 
         try {
-            console.log('Incoming ' + method + ' request at uri: ' + uri);
-            if (uri.slice(0, 4) == '/link') {
-                console.log('routing link request');
-                requestProcessor = router.resolve(method);
-                console.log('handling request with ' + requestProcessor.name + ' processor');
-                requestProcessor.call({}, db, uri, body)
-                .then(function(data){
-                    console.log('responding to request with data:');
-                    handleResponse(res, data);
-                }, function(err) {
-                    console.log('hit some kind of error');
-                    handleError(res, err);
-                });
-            }else if(uri.slice(0, 1) == '/' && method === 'GET') {
-                console.log('Serving home page content');
-                templates.home(function(template) {
-                    payload = template;
-                    handleResponse(res, payload, true);
-                });
-            }else {
-                console.log('Could not resolve uri');
-                console.log(uri);
-                console.log(method);
-                handleError(res, 'Could not resolve URI');
-            }
+            processPostData(req, function(body) {
+                if(body) {
+                    body = JSON.parse(body);
+
+                }
+                console.log('Incoming ' + method + ' request at uri: ' + uri);
+                console.log(body);
+                if (uri.slice(0, 5) === '/link') {
+                    console.log('routing link request');
+                    requestProcessor = router.resolve(method);
+                    console.log('handling request with ' +
+                     requestProcessor.name + ' processor');
+                    requestProcessor.call({}, db, uri, body)
+                    .then(function(data){
+                        console.log('responding to request with data:');
+                        handleResponse(res, data);
+                    }, function(err) {
+                        console.log('hit some kind of error');
+                        handleError(res, err);
+                    });
+                }else if(uri.slice(0, 1) == '/' && method === 'GET') {
+                    console.log('Serving home page content');
+                    templates.home(function(template) {
+                        payload = template;
+                        handleResponse(res, payload, true);
+                    });
+                }else {
+                    console.log('Could not resolve uri');
+                    console.log(uri);
+                    console.log(method);
+                    handleError(res, 'Could not resolve URI');
+                }
+            });
         } catch(ex) {
             handleError(res, ex);
         }
     });
 };
 
+startServer();
 
-var database = new UrlDb();
+function startServer(callback) {
+    var urlDb = new UrlDb(devDb);
 
-database.connect().then(function(db){
-    console.log('starting server');
-    httpServer(db).listen(1337);
-    db.close();
-}, function(err){
-    console.log(err);
-    throw err;
-});
+    urlDb.initialize().then(function(){
+        console.log('starting server');
+        httpServer(urlDb).listen(1337);
+        callback();
+    }, function(err){
+        console.log(err);
+        throw err;
+    });
+}
 
 function handleError(response, error) {
     var errorMessage;
@@ -89,8 +102,34 @@ function handleResponse(response, payload, isHtml) {
     response.end(payload);
 }
 
+function processPostData(request, callback) {
+    var postData = "";
+    if(typeof callback !== 'function') return null;
+
+    if(request.method === 'POST') {
+        request.on('data', function(data) {
+            postData += data;
+            if(postData.length > 1e6) {
+                postData = "";
+                request.connection.destroy();
+            }
+        });
+
+        request.on('end', function() {
+            console.log('handling post data:');
+            console.log(postData);
+
+            return callback(postData);
+        });
+
+    }else {
+        callback();
+    }
+}
+
 module.exports = {
     httpServer: httpServer,
     handleError: handleError,
+    startServer: startServer,
     handleResponse: handleResponse
 };

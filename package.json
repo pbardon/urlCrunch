@@ -9,6 +9,7 @@
   "author": "Peter Bardon",
   "license": "ISC",
   "devDependencies": {
+    "node-inspector": "^0.12.7",
     "nodeunit": "^0.9.1"
   },
   "dependencies": {

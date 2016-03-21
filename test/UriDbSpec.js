@@ -9,8 +9,6 @@ var testDb = 'mongodb://localhost:27017/test';
 var database;
 var urlDb = new UrlDb(testDb);
 
-// emitter.setMaxListeners(21);
-
 module.exports = {
 
     testConnect: function(test) {
@@ -39,6 +37,13 @@ module.exports = {
                     test.done();
                 });
             });
+        });
+    },
+
+    testGetUrl: function(test){
+        urlDb.getUrl(testKey).then(function(data){
+            test.ok(data.url === testUrl, 'test url retrieved');
+            test.done();
         });
     },
 
