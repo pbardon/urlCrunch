@@ -16,7 +16,7 @@ function onGet(urlDb, uri, body, response) {
     urlDb.getUrl(key).then(function(urlObject){
         if (urlObject) {
             response.writeHead(301, {
-                'Location' : 'http://' + urlObject.url
+                'Location' : urlObject.url
             });
             return deferred.resolve({ response: response, data: urlObject});
         }
@@ -75,21 +75,31 @@ function onDelete(urlDb, url, body, response) {
 
 function parseUrl(body) {
     console.log(body.url);
+    var parsedUrl;
     if (!body.url) {
         console.log('URL is missing from post body');
         throw new Error('URL is missing from post body');
     }
+    //Decode Uri if it was encoded in transit...
+    parsedUrl = unescape(body.url);
 
-    if (!isUrl(body.url)) {
+    console.log(url.parse(parsedUrl));
+
+    if (!parsedUrl) {
+        console.log('There was some problem decoding the url');
+        throw new Error('URL was not decoded');
+    }
+
+    if (!isUrl(parsedUrl)) {
         console.log('URL passed in was not a legitimate url.');
         throw new Error('URL passed in was not a legitimate url.');
     }
 
-    if(body.url.length < 1) {
+    if(url.length < 1) {
         throw new Error('no url provided');
     }
 
-    return body.url;
+    return parsedUrl;
 }
 
 function isUrl(urlToCheck) {
