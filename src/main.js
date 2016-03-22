@@ -3,6 +3,7 @@
 
 
 var http = require('http'),
+process= require('process'),
 url = require('url'),
 fs = require('fs'),
 q = require('q'),
@@ -11,6 +12,8 @@ router = require('./router'),
 templates = require('./templates'),
 UrlDb = require('./UrlDb'),
 devDb = 'mongodb://localhost:27017/dev';
+
+
 
 
 var httpServer = function(db) {
@@ -24,7 +27,6 @@ var httpServer = function(db) {
 
         try {
             console.log('Incoming ' + method + ' request at uri: ' + uri);
-
             processPostData(req, function(body) {
                 if (uri.slice(0, 5) === '/link') {
                     console.log('routing link request');
@@ -61,7 +63,16 @@ var httpServer = function(db) {
 startServer();
 
 function startServer(callback) {
-    var urlDb = new UrlDb(devDb);
+    var db = devDb;
+    console.log(process.env);
+    if (process.env.MONGO_HOSTNAME) {
+        console.log('using mongodb located at ' + process.env.MONGO_HOSTNAME);
+        var hostname = 'mongodb://'+ process.env.MONGO_HOSTNAME +':27017/urlDb';
+        console.log(hostname);
+        db = hostname;
+    }
+
+    var urlDb = new UrlDb(db);
 
     urlDb.initialize().then(function(){
         console.log('starting server');
