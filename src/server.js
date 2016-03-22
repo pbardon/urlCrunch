@@ -32,7 +32,6 @@ function onPost(urlDb, uri, body, response) {
     console.log('starting onPost');
     console.log('POST:');
     try {
-
         urlLinkToCreate = parseUrl(body);
         //Create new key for link
         var generatedKey = key.generateKey(urlLinkToCreate, 6);
@@ -75,6 +74,7 @@ function onDelete(urlDb, url, body, response) {
 }
 
 function parseUrl(body) {
+    console.log(body.url);
     if (!body.url) {
         console.log('URL is missing from post body');
         throw new Error('URL is missing from post body');
@@ -93,15 +93,10 @@ function parseUrl(body) {
 }
 
 function isUrl(urlToCheck) {
-    try {
-        parsed = url.parse(urlToCheck);
-        if (parsed) {
-            return true;
-        }
-        return false;
-    }catch(ex) {
-        return false;
-    }
+    var expression = /(https?:\/\/(?:www\.|(?!www))[^\s\.]+\.[^\s]{2,}|www\.[^\s]+\.[^\s]{2,})/gi;
+    var regex = new RegExp(expression);
+    var result = regex.test(urlToCheck);
+    return result;
 }
 
 module.exports = {

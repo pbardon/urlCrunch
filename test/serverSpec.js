@@ -2,6 +2,7 @@ var server = require('../src/server');
 var testDb = 'mongodb://localhost:27017/test';
 var testUri = '/link/AFDS3';
 var testUrl = 'www.ebay.com';
+var testNonUrl = 'function(){console.log("hello");}();';
 var linkBase = '/link/',
 returnedId;
 
@@ -23,8 +24,12 @@ exports.testOnPost = function(test) {
             test.ok(data.data._id, 'saved with id');
             test.ok(data.data.url === testUrl, 'saved with id');
             returnedId = data.data._id;
+            var deferred = server.onPost(urlDb, null, {url: testNonUrl}, mockResponse).then(function(data){
+        }, function(err) {
+            console.log('hit error while trying to enter bad url');
             urlDb.disconnect();
             test.done();
+        });
         });
         test.ok(typeof deferred.then != 'undefined', 'Promise returned from onPost');
     });
