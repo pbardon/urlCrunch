@@ -9,8 +9,7 @@
   "author": "Peter Bardon",
   "license": "ISC",
   "devDependencies": {
-    "nodeunit": "^0.9.1",
-    "node": "^4.2.3"
+    "nodeunit": "^0.9.1"
   },
   "dependencies": {
     "mongodb": "^2.1.7",

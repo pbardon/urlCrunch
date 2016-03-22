@@ -5,7 +5,8 @@
     url = require('url');
 
     function onGet(urlDb, uri, body, response) {
-        var deferred = q.defer();
+        var deferred = q.defer(),
+        scheme;
         console.log('GET:');
         console.log(uri);
 
@@ -17,8 +18,13 @@
         console.log(key);
         urlDb.getUrl(key).then(function(urlObject){
             if (urlObject) {
+                var scheme = '';
+                if (!urlObject.url.startsWith('http')) {
+                    scheme = 'http://';
+                }
+                var redirectUrl = scheme + urlObject.url;
                 response.writeHead(301, {
-                    'Location' : urlObject.url
+                    'Location' :redirectUrl
                 });
                 return deferred.resolve({ response: response, data: urlObject});
             }
