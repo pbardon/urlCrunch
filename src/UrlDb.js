@@ -1,11 +1,11 @@
 (function() {
-    "use strict";
+    'use strict';
 
-    var fs = require('fs');
-    var path = require('path');
-    var q = require('q');
-    var key = require('./key');
-    var log = console.log;
+    var fs = require('fs'),
+    path = require('path'),
+    q = require('q'),
+    key = require('./key'),
+    log = console.log;
 
     var MongoClient = require('mongodb').MongoClient;
 
