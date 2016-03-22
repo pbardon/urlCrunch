@@ -69,7 +69,7 @@ function startServer(callback) {
     var urlDb = new UrlDb(dbAddress);
     urlDb.initialize().then(function(){
         console.log('starting server');
-        httpServer(urlDb).listen(1337);
+        httpServer(urlDb).listen(config.port);
         callback();
     }, function(err){
         console.log(err);
