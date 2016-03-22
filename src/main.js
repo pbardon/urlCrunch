@@ -3,7 +3,6 @@
 
 
 var http = require('http'),
-process= require('process'),
 url = require('url'),
 fs = require('fs'),
 q = require('q'),
@@ -11,7 +10,8 @@ url = require('url'),
 router = require('./router'),
 templates = require('./templates'),
 UrlDb = require('./UrlDb'),
-devDb = 'mongodb://localhost:27017/dev';
+config = require('./config'),
+dbAddress = 'mongodb://'+ config.dbAddress +':27017/dev';
 
 
 
@@ -34,8 +34,8 @@ var httpServer = function(db) {
                     console.log('handling request with ' +
                      requestProcessor.name + ' processor');
                     requestProcessor.call({}, db, uri, body, res)
-                    .then(function(data){
-                        handleResponse(data[0], data[1]);
+                    .then(function(resolved){
+                        handleResponse(resolved.response, resolved.data);
                     }, function(err) {
                         console.log('There was some kind of error while processing the request');
                         console.log(err.message);
@@ -63,17 +63,10 @@ var httpServer = function(db) {
 startServer();
 
 function startServer(callback) {
-    var db = devDb;
-    console.log(process.env);
-    if (process.env.MONGO_HOSTNAME) {
-        console.log('using mongodb located at ' + process.env.MONGO_HOSTNAME);
-        var hostname = 'mongodb://'+ process.env.MONGO_HOSTNAME +':27017/urlDb';
-        console.log(hostname);
-        db = hostname;
-    }
+    console.log(dbAddress);
+    console.log('using mongodb located at ' + dbAddress);
 
-    var urlDb = new UrlDb(db);
-
+    var urlDb = new UrlDb(dbAddress);
     urlDb.initialize().then(function(){
         console.log('starting server');
         httpServer(urlDb).listen(1337);
