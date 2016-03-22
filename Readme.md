@@ -7,7 +7,7 @@ A Node.js based url shortening micro-service
 
 You will need Node.js installed on the system you are running this app on.
 
-You need to have mongodb installed and running locally on port 127017 to run this app or its testOnPost
+You need to have mongodb installed and running locally on port 27017 to run this app or its testOnPost
 
 You also need to have npm installed to install the dependencies, run the tests, and run the app.
 
@@ -25,13 +25,14 @@ git clone
 Mongodb needs to be running or the tests will not work
 
 To run the tests run the following command from the root of the urlCrunch directory:
-    ***npm test***
+
+    npm test
 
 ##Running the application
 Mongodb needs to be running locally or on the host provided in the dbAddress field in the config.js file or the application will not run
 
 To start the server run this command from the root of the urlCrunch directory:
 
-    ***npm start***
+    npm start
 
-(You may need to run this command as root the first time to create the logfile)
+You may need to run this command as root the first time to create the logfile
