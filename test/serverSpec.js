@@ -1,5 +1,6 @@
 var server = require('../src/server');
-var testDb = 'mongodb://localhost:27017/test';
+config = require('../src/config');
+var testDb = 'mongodb://'+ config.dbAddress +':27017/test';
 var testUri = '/link/AFDS3';
 var testUrl = 'www.ebay.com';
 var testNonUrl = 'function(){console.log("hello");}();';
