@@ -5,7 +5,7 @@ var testKey2 = 'testKey2';
 var testUrl2 = 'www.facebook.com';
 var testKey3 = 'testKey3';
 var testUrl3 = 'www.yahoo.com';
-var testDb = 'mongodb://localhost:27017/test';
+var testDb = 'mongodb://'+ config.dbAddress +':27017/test';
 var database;
 var urlDb = new UrlDb(testDb);
 
