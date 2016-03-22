@@ -21,6 +21,6 @@
 },
   "scripts": {
       "test": "nodeunit test/*.js",
-      "start": "node src/main.js"
+      "start": "node src/main.js > /var/log/urlCrunch.log 2>&1 &"
   }
 }
