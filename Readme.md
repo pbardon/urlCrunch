@@ -11,8 +11,7 @@ You also need to have npm installed to install the dependencies, run the tests, 
 
 To install this app, clone this git repository to your local machine with the following command:
 
-git clone
-
+    git clone https://github.com/pbardondev/urlCrunch.git
 
 
 ##Running the tests
