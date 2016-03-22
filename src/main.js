@@ -69,6 +69,9 @@ function startServer(callback) {
     var urlDb = new UrlDb(dbAddress);
     urlDb.initialize().then(function(){
         console.log('starting server');
+        console.log('on port:');
+        var port = config.port;
+        console.log(port);
         httpServer(urlDb).listen(config.port);
         callback();
     }, function(err){
