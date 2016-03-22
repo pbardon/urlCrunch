@@ -1,12 +1,13 @@
-var UrlDb = require('../src/UrlDb');
-var testKey = 'testKey';
-var testUrl = 'www.google.com';
-var testKey2 = 'testKey2';
-var testUrl2 = 'www.facebook.com';
-var testKey3 = 'testKey3';
-var testUrl3 = 'www.yahoo.com';
-var testDb = 'mongodb://'+ config.dbAddress +':27017/test';
-var database;
+var UrlDb = require('../src/UrlDb'),
+config = require('../src/config'),
+testKey = 'testKey',
+testUrl = 'www.google.com',
+testKey2 = 'testKey2',
+testUrl2 = 'www.facebook.com',
+testKey3 = 'testKey3',
+testUrl3 = 'www.yahoo.com',
+testDb = 'mongodb://'+ config.dbAddress +':27017/test';
+
 var urlDb = new UrlDb(testDb);
 
 module.exports = {
@@ -33,7 +34,8 @@ module.exports = {
                 test.ok(data.url === testUrl, 'with correct value');
 
                 urlDb.addUrl(testKey, testUrl).then(function(data){
-                    test.ok(data._id !== testKey, 'new key generated for duplicate keys');
+                    test.ok(data._id !== testKey,
+                         'new key generated for duplicate keys');
                     test.done();
                 });
             });

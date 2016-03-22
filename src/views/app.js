@@ -7,6 +7,7 @@ $(document).ready(function(){
                 return '<h4>There was a problem generating your shortened url, try again:</h4><br><a href="' + link +'">Back to Homepage</a>';
             });
         }
+        var homeLink = window.location.href;
         var request = $.ajax({
               method: 'POST',
               url: '/link',
@@ -17,13 +18,12 @@ $(document).ready(function(){
                   var obj = data;
                   $('#appContent').html(function() {
                       var link = window.location.href + 'link/'+ obj._id;
-                      return '<h4>Your shortened url is: <a href="' + link +'" >' +link +'</a></h4>';
+                      return '<h4>Your shortened url is: <a href="' + link +'" >' +link +'</a></h4><br><a href="' + homeLink +'">Back to Homepage</a>';
                   });
               },
               error: function(err){
                   $('#appContent').html(function() {
-                      var link = window.location.href;
-                      return '<h4>There was a problem generating your shortened url, try again:</h4><br><a href="' + link +'">Back to Homepage</a>';
+                      return '<h4>There was a problem generating your shortened url, try again:</h4><br><a href="' + homeLink +'">Back to Homepage</a>';
                   });
 
               }

@@ -9,12 +9,10 @@ q = require('q'),
 url = require('url'),
 router = require('./router'),
 templates = require('./templates'),
+scripts = require('./scripts'),
 UrlDb = require('./UrlDb'),
 config = require('./config'),
 dbAddress = 'mongodb://'+ config.dbAddress +':27017/dev';
-
-
-
 
 var httpServer = function(db) {
     return http.createServer(function (req, res) {
@@ -41,13 +39,21 @@ var httpServer = function(db) {
                         console.log(err.message);
                         handleError(res, err);
                     });
-                }else if(uri.slice(0, 1) == '/' && method === 'GET') {
+                }else if(uri.slice(0, 7) == '/script' && method === 'GET') {
+                    console.log('Serving home page content');
+                    scripts.app(function(script) {
+                        payload = script;
+                        handleResponse(res, payload, true);
+                    });
+                }
+                else if(uri.slice(0, 1) == '/' && method === 'GET') {
                     console.log('Serving home page content');
                     templates.home(function(template) {
                         payload = template;
                         handleResponse(res, payload, true);
                     });
-                }else {
+                }
+                else {
                     console.log('Could not resolve uri');
                     console.log(uri);
                     console.log(method);
