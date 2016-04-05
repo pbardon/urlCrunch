@@ -17,15 +17,20 @@
         // Try to find key in url db.
         console.log(key);
         urlDb.getUrl(key).then(function(urlObject){
-            if (urlObject) {
+           console.log('promise resolved, checking urlObj:');
+           console.log(urlObject); 
+           if (urlObject) {
+                console.log('inside urlobj if');
                 var scheme = '';
-                if (!urlObject.url.startsWith('http')) {
+                if (!urlObject.url.slice(4) === 'http') {
                     scheme = 'http://';
                 }
                 var redirectUrl = scheme + urlObject.url;
+                console.log('about to wrtie head');
                 response.writeHead(301, {
                     'Location' :redirectUrl
                 });
+                console.log('about to resolve promise2...')
                 return deferred.resolve({ response: response, data: urlObject});
             }
             return deferred.reject(new Error(

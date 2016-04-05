@@ -64,6 +64,7 @@
                 log('found');
                 log(data);
                 if(data[0]) {
+		    log('resolving promise....');
                     return deferred.resolve(data[0]);
                 }else {
                     return deferred.resolve(false);

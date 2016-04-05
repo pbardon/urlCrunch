@@ -1,4 +1,4 @@
 module.exports = {
     dbAddress : 'localhost',
-    port: 1337
+    port: 8080
 };

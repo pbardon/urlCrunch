@@ -12,7 +12,7 @@ templates = require('./templates'),
 scripts = require('./scripts'),
 UrlDb = require('./UrlDb'),
 config = require('./config'),
-dbAddress = 'mongodb://'+ config.dbAddress +':27017/dev';
+dbAddress = 'mongodb://'+ config.dbAddress +':27017/production';
 
 var httpServer = function(db) {
     return http.createServer(function (req, res) {

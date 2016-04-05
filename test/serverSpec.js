@@ -41,8 +41,11 @@ exports.testOnGet = function(test) {
     urlDb.initialize().then(function(data){
         var deferred = server.onGet(urlDb, uri, {}, mockResponse).then(function(data){
             console.log(data);
+            console.log('that was data');
             test.ok(data.data._id === returnedId, 'correct id retrieved');
             test.ok(data.data.url === testUrl, 'correct value retrieved');
+            
+            console.log('about to disconnect server');
             urlDb.disconnect();
             test.done();
         });
